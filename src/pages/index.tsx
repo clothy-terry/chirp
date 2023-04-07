@@ -1,12 +1,9 @@
 import { SignInButton, useUser } from "@clerk/nextjs";
 import { type NextPage } from "next";
 import Head from "next/head";
-import Link from "next/link";
-import { SignIn, SignOutButton } from "@clerk/nextjs";
-import { SignInButton } from "@clerk/nextjs";
-import { useUser } from "@clerk/nextjs";
 
-import { api, RouterOutputs } from "~/utils/api";
+import { api } from "~/utils/api";
+import type { RouterOutputs } from "~/utils/api";
 
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
@@ -14,7 +11,7 @@ import Image from "next/image";
 import { LoadingPage } from "~/compnents/loading";
 import { useState } from "react";
 
-
+dayjs.extend(relativeTime);
 
 const CreatePostWizard = () => {
   const { user } = useUser();
