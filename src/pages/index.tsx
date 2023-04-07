@@ -10,6 +10,8 @@ import relativeTime from "dayjs/plugin/relativeTime";
 import Image from "next/image";
 import { LoadingPage } from "~/compnents/loading";
 import { useState } from "react";
+import toast from "react-hot-toast";
+
 
 dayjs.extend(relativeTime);
 
@@ -25,6 +27,14 @@ const CreatePostWizard = () => {
       setInput("");
       void ctx.posts.getAll.invalidate();
     },
+    onError: (error) => {
+      if (error.data?.code === 'BAD_REQUEST') {
+        toast.error('Incorrect post format!');
+      } else {
+        toast.error('At most 3 posts within 1 min. Please try again later.');
+      }
+    }
+    
   });
 
   console.log(user);
