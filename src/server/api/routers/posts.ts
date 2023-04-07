@@ -30,16 +30,22 @@ export const postsRouter = createTRPCRouter({
 
     const users = userList.map(filtetUserForClient);
 
-    console.log(users);
+    /**console.log(users[0]?.id);
+    console.log("/////////////////////////////////////////////////////////////////")**/
+
+    var one = 1;
 
     return posts.map((post) => {
+      /**console.log(post.userId);**/
       const author = users.find((user) => user.id === post.userId);
+      console.log(one);
+      one+=1;
       if (!author)
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Author for post not found",
         });
-
+      
       return {
         post,
         author: {
