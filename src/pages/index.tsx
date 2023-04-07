@@ -7,11 +7,10 @@ import { useUser } from "@clerk/nextjs";
 
 import { api, RouterOutputs } from "~/utils/api";
 
-import dayjs from "dayjs";
-import relativeTime from "dayjs/plugin/relativeTime"
+
 import Image from "next/image";
 
-dayjs.extend(relativeTime);
+
 
 const CreatePostWizard = () => {
   const { user } = useUser();
@@ -44,7 +43,7 @@ const PostView = (props: PostWithUser) => {
       <Image src={author.profilePicture} className="h-16 w-16 rounded-full" alt={`@${author.name}`} width={56} height={56} />
       <div className="flex flex-col">
         <div className="flex text-slate-300 gap-2">
-          <span className="font-bold">{`@${author.name}`}</span> <span>|</span> <span>{dayjs(post.createdAt).fromNow()}</span>
+          <span className="font-bold">{`@${author.name}`}</span> <span>|</span> <span></span>
         </div>
         <div className="flex-grow">{post.content}</div>
       </div>
