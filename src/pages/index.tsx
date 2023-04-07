@@ -9,15 +9,22 @@ import { api, RouterOutputs } from "~/utils/api";
 
 
 import Image from "next/image";
+import { LoadingPage, LoadingSpinner } from "~/compnents/loading";
+import { useState } from "react";
 
 
 
 const CreatePostWizard = () => {
   const { user } = useUser();
+
+  const [input, setInput] = useState("");
+
+  const { mutate } = api.posts.create.useMutation();
+
   console.log(user);
   if (!user) return null;
 
-  const gap = 3; 
+  const gap = 3;
   const imageSize = 16;
 
   return (
@@ -30,24 +37,33 @@ const CreatePostWizard = () => {
       <input
         placeholder="Type something"
         className="grow bg-transparent outline-none"
-      ></input>
+        type="text"
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+      />
+      <button onClick={() => mutate({content:input})}>Post</button>
     </div>
   );
 };
 
 type PostWithUser = RouterOutputs["posts"]["getAll"][number];
 const PostView = (props: PostWithUser) => {
-  const {post, author} = props;
+  const { post, author } = props;
   return (
-    <div key={post.id} className="flex border-b border-slate-400 p-4 gap-3">
-      <Image src={author.profilePicture} className="h-16 w-16 rounded-full" alt={`@${author.name}`} width={56} height={56} />
+    <div key={post.id} className="flex gap-3 border-b border-slate-400 p-4">
+      <image
+        src={author.profilePicture}
+        className="h-16 w-16 rounded-full"
+        alt={`@${author.name}`}
+        width={56}
+        height={56}
+      />
       <div className="flex flex-col">
         <div className="flex text-slate-300 gap-2">
           <span className="font-bold">{`@${author.name}`}</span> <span>|</span> <span></span>
         </div>
         <div className="flex-grow">{post.content}</div>
       </div>
-      
     </div>
   );
 };
@@ -57,7 +73,7 @@ const Home: NextPage = () => {
 
   const { data, isLoading } = api.posts.getAll.useQuery();
 
-  if (isLoading) return <div>Loading...</div>;
+  if (isLoading) return <LoadingPage />;
 
   if (!data) return <div>Something wrong</div>;
 
