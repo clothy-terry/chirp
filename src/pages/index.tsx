@@ -1,16 +1,14 @@
+import { SignInButton, useUser } from "@clerk/nextjs";
 import { type NextPage } from "next";
 import Head from "next/head";
-import Link from "next/link";
-import { SignIn, SignOutButton } from "@clerk/nextjs";
-import { SignInButton } from "@clerk/nextjs";
-import { useUser } from "@clerk/nextjs";
 
-import { api, RouterOutputs } from "~/utils/api";
+import { api } from "~/utils/api";
+import type { RouterOutputs } from "~/utils/api";
 
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import Image from "next/image";
-import { LoadingPage, LoadingSpinner } from "~/compnents/loading";
+import { LoadingPage } from "~/compnents/loading";
 import { useState } from "react";
 
 dayjs.extend(relativeTime);
@@ -20,64 +18,91 @@ const CreatePostWizard = () => {
 
   const [input, setInput] = useState("");
 
-  const { mutate } = api.posts.create.useMutation();
+  const ctx = api.useContext();
+
+  const { mutate, isLoading: isPosting } = api.posts.create.useMutation({
+    onSuccess: () => {
+      setInput("");
+      void ctx.posts.getAll.invalidate();
+    },
+  });
 
   console.log(user);
-  if (!user) return null;
 
-  const gap = 3;
-  const imageSize = 16;
+  if (!user) return null;
 
   return (
     <div className="flex w-full gap-3">
-      <img
-        className="h-16 w-16 rounded-full"
+      <Image
         src={user.profileImageUrl}
         alt="Profile image"
-      ></img>
+        className="h-14 w-14 rounded-full"
+        width={56}
+        height={56}
+      />
       <input
-        placeholder="Type something"
+        placeholder="Type some emojis!"
         className="grow bg-transparent outline-none"
         type="text"
         value={input}
         onChange={(e) => setInput(e.target.value)}
+        disabled={isPosting}
       />
-      <button onClick={() => mutate({content:input})}>Post</button>
+      <button onClick={() => mutate({ content: input })}>Post</button>
     </div>
   );
 };
 
 type PostWithUser = RouterOutputs["posts"]["getAll"][number];
+
 const PostView = (props: PostWithUser) => {
   const { post, author } = props;
   return (
     <div key={post.id} className="flex gap-3 border-b border-slate-400 p-4">
       <Image
-        src={author.profilePicture}
-        className="h-16 w-16 rounded-full"
-        alt={`@${author.name}`}
+        src={author.profileImageUrl}
+        className="h-14 w-14 rounded-full"
+        alt={`@${author.username}'s profile picture`}
         width={56}
         height={56}
       />
       <div className="flex flex-col">
-        <div className="flex gap-2 text-slate-300">
-          <span className="font-bold">{`@${author.name}`}</span> <span>|</span>{" "}
-          <span>{dayjs(post.createdAt).fromNow()}</span>
+        <div className="flex gap-1 text-slate-300">
+          <span>{`@${author.username} `}</span>
+          <span className="font-thin">{` · ${dayjs(
+            post.createdAt
+          ).fromNow()}`}</span>
         </div>
-        <div className="flex-grow">{post.content}</div>
+        <span className="text-2xl">{post.content}</span>
       </div>
     </div>
   );
 };
 
+const Feed = () => {
+  const { data, isLoading: postsLoading } = api.posts.getAll.useQuery();
+
+  if (postsLoading) return <LoadingPage />;
+
+  if (!data) return <div>Something went wrong</div>;
+
+  return (
+    <div className="flex flex-col">
+      {data.map((fullPost) => (
+        <PostView {...fullPost} key={fullPost.post.id} />
+      ))}
+    </div>
+  );
+};
+
 const Home: NextPage = () => {
-  const user = useUser();
+  const { isLoaded: userLoaded, isSignedIn } = useUser();
 
-  const { data, isLoading } = api.posts.getAll.useQuery();
+  // Start fetching asap
+  api.posts.getAll.useQuery();
 
-  if (isLoading) return <LoadingPage />;
-
-  if (!data) return <div>Something wrong</div>;
+  // Return empty div if user isn't loaded
+  if (!userLoaded) return <div />;
 
   return (
     <>
@@ -88,21 +113,16 @@ const Home: NextPage = () => {
       </Head>
       <main className="flex h-screen justify-center">
         <div className="h-full w-full border-x border-slate-400 md:max-w-2xl">
-          <div className="border-b border-slate-400 p-4">
-            {!user.isSignedIn && (
+          <div className="flex border-b border-slate-400 p-4">
+            {!isSignedIn && (
               <div className="flex justify-center">
                 <SignInButton />
               </div>
             )}
-            <div>
-              {user.isSignedIn && <CreatePostWizard></CreatePostWizard>}
-            </div>
+            {isSignedIn && <CreatePostWizard />}
           </div>
-          <div className="flex flex-col">
-            {[...data, ...data].map((fullPost) => (
-              <PostView {...fullPost} key={fullPost.post.id} />
-            ))}
-          </div>
+
+          <Feed />
         </div>
       </main>
     </>
