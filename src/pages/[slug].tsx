@@ -1,54 +1,51 @@
 import type { GetStaticProps, NextPage } from "next";
 import Head from "next/head";
-import { LoadingPage } from "~/compnents/loading";
 import { api } from "~/utils/api";
-import dayjs from "dayjs";
-import relativeTime from "dayjs/plugin/relativeTime";
 
-dayjs.extend(relativeTime);
-
-const ProfileFeed = (props: {userId: string}) => {
-  const {data, isLoading} = api.posts.getPostbyUserId.useQuery({
+const ProfileFeed = (props: { userId: string }) => {
+  const { data, isLoading } = api.posts.getPostbyUserId.useQuery({
     userId: props.userId,
   });
+
   if (isLoading) return <LoadingPage />;
 
   if (!data || data.length === 0) return <div>User has not posted</div>;
 
-  return <div>
-    {data.map(fullpost => (<PostView {...fullpost} key={fullpost.post.id}></PostView>))}
-  </div>
-}
+  return (
+    <div className="flex flex-col">
+      {data.map((fullPost) => (
+        <PostView {...fullPost} key={fullPost.post.id} />
+      ))}
+    </div>
+  );
+};
 
-const SinglePostPage: NextPage<{ username: string }> = ({ username }) => {
-  const { data, isLoading } = api.profile.getUserByUserName.useQuery({
+const ProfilePage: NextPage<{ username: string }> = ({ username }) => {
+  const { data } = api.profile.getUserByUserName.useQuery({
     username,
   });
-
-  if (isLoading) {
-    console.log("loading");
-  }
-
   if (!data) return <div>404</div>;
 
-  console.log(data);
   return (
     <>
       <Head>
         <title>{data.username}</title>
       </Head>
       <PageLayout>
-        <div className="relative h-48  bg-slate-600">
-          <img
+        <div className="relative h-36 bg-slate-600">
+          <Image
             src={data.profileImageUrl}
             alt={`${data.username ?? ""}'s profile pic`}
-            style={{ width: "128px", height: "128px" }}
-            className="absolute bottom-0 left-0 -mb-[64px] ml-4 rounded-full border-2 border-black"
+            width={128}
+            height={128}
+            className="absolute bottom-0 left-0 -mb-[64px] ml-4 rounded-full border-4 border-black bg-black"
           />
         </div>
         <div className="h-[64px]"></div>
-        <div className="p-4 text-2xl">{`@${data.username}`}</div>
-        <div className="w-full border-b border-slate-400"></div>
+        <div className="p-4 text-2xl font-bold">{`@${
+          data.username ?? ""
+        }`}</div>
+        <div className="w-full border-b border-slate-400" />
         <ProfileFeed userId={data.id} />
       </PageLayout>
     </>
@@ -60,6 +57,8 @@ import { appRouter } from "~/server/api/root";
 import { prisma } from "~/server/db";
 import superjson from "superjson";
 import { PageLayout } from "~/compnents/layout";
+import Image from "next/image";
+import { LoadingPage } from "~/compnents/loading";
 import { PostView } from "~/compnents/postview";
 
 export const getStaticProps: GetStaticProps = async (context) => {
@@ -78,7 +77,10 @@ export const getStaticProps: GetStaticProps = async (context) => {
   await ssg.profile.getUserByUserName.prefetch({ username });
 
   return {
-    props: { trpcState: ssg.dehydrate(), username },
+    props: {
+      trpcState: ssg.dehydrate(),
+      username,
+    },
   };
 };
 
@@ -86,4 +88,4 @@ export const getStaticPaths = () => {
   return { paths: [], fallback: "blocking" };
 };
 
-export default SinglePostPage;
+export default ProfilePage;
