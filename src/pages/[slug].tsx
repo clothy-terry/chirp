@@ -1,6 +1,24 @@
 import type { GetStaticProps, NextPage } from "next";
 import Head from "next/head";
+import { LoadingPage } from "~/compnents/loading";
 import { api } from "~/utils/api";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+
+dayjs.extend(relativeTime);
+
+const ProfileFeed = (props: {userId: string}) => {
+  const {data, isLoading} = api.posts.getPostbyUserId.useQuery({
+    userId: props.userId,
+  });
+  if (isLoading) return <LoadingPage />;
+
+  if (!data || data.length === 0) return <div>User has not posted</div>;
+
+  return <div>
+    {data.map(fullpost => (<PostView {...fullpost} key={fullpost.post.id}></PostView>))}
+  </div>
+}
 
 const SinglePostPage: NextPage<{ username: string }> = ({ username }) => {
   const { data, isLoading } = api.profile.getUserByUserName.useQuery({
@@ -31,6 +49,7 @@ const SinglePostPage: NextPage<{ username: string }> = ({ username }) => {
         <div className="h-[64px]"></div>
         <div className="p-4 text-2xl">{`@${data.username}`}</div>
         <div className="w-full border-b border-slate-400"></div>
+        <ProfileFeed userId={data.id} />
       </PageLayout>
     </>
   );
@@ -41,6 +60,7 @@ import { appRouter } from "~/server/api/root";
 import { prisma } from "~/server/db";
 import superjson from "superjson";
 import { PageLayout } from "~/compnents/layout";
+import { PostView } from "~/compnents/postview";
 
 export const getStaticProps: GetStaticProps = async (context) => {
   const ssg = createProxySSGHelpers({
