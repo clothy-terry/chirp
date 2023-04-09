@@ -1,17 +1,14 @@
 import { SignInButton, useUser } from "@clerk/nextjs";
 import { type NextPage } from "next";
 
-
 import { api } from "~/utils/api";
 
 import Image from "next/image";
 import { LoadingPage, LoadingSpinner } from "~/compnents/loading";
 import { useState } from "react";
-import toast from "react-hot-toast";
+import { toast } from "react-hot-toast";
 import { PageLayout } from "~/compnents/layout";
 import { PostView } from "~/compnents/postview";
-
-
 
 const CreatePostWizard = () => {
   const { user } = useUser();
@@ -40,8 +37,13 @@ const CreatePostWizard = () => {
 
   return (
     <div className="flex w-full gap-3">
-      <img src={user.profileImageUrl} className="h-14 w-14 rounded-full"></img>
-
+      <Image
+        src={user.profileImageUrl}
+        alt="Profile image"
+        className="h-14 w-14 rounded-full"
+        width={56}
+        height={56}
+      />
       <input
         placeholder="Type some emojis!"
         className="grow bg-transparent outline-none"
@@ -59,21 +61,16 @@ const CreatePostWizard = () => {
         disabled={isPosting}
       />
       {input !== "" && !isPosting && (
-        <button disabled={isPosting} onClick={() => mutate({ content: input })}>
-          Post
-        </button>
+        <button onClick={() => mutate({ content: input })}>Post</button>
       )}
-
       {isPosting && (
         <div className="flex items-center justify-center">
-          <LoadingSpinner size={40} />
+          <LoadingSpinner size={20} />
         </div>
       )}
     </div>
   );
 };
-
-
 
 const Feed = () => {
   const { data, isLoading: postsLoading } = api.posts.getAll.useQuery();
@@ -110,6 +107,7 @@ const Home: NextPage = () => {
         )}
         {isSignedIn && <CreatePostWizard />}
       </div>
+
       <Feed />
     </PageLayout>
   );
